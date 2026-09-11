@@ -1,0 +1,1312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Local Business OS — Market Terminal</title>
+
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;
+ font-family:Arial,Helvetica,sans-serif;
+ background:#eef2f6;
+ color:#17202a;
+}
+header{
+ background:#111827;
+ color:white;
+ padding:14px 18px;
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ gap:15px;
+ position:sticky;
+ top:0;
+ z-index:20;
+}
+.logo{font-size:21px;font-weight:800}
+.status{font-size:12px;color:#86efac}
+.container{max-width:1500px;margin:auto;padding:16px}
+
+.toolbar{
+ background:white;
+ border:1px solid #d7dde5;
+ border-radius:10px;
+ padding:12px;
+ display:flex;
+ flex-wrap:wrap;
+ gap:8px;
+ margin-bottom:12px;
+}
+button,select,input{
+ border:1px solid #cbd5e1;
+ border-radius:6px;
+ padding:9px 11px;
+ font-size:14px;
+ background:white;
+}
+button{
+ cursor:pointer;
+ font-weight:700;
+}
+button:hover{background:#f1f5f9}
+.primary{background:#2563eb;color:white;border-color:#2563eb}
+.success{background:#16a34a;color:white;border-color:#16a34a}
+.danger{background:#dc2626;color:white;border-color:#dc2626}
+.dark{background:#111827;color:white;border-color:#111827}
+.warning{background:#f59e0b;color:white;border-color:#f59e0b}
+
+.grid{
+ display:grid;
+ grid-template-columns:2fr 1fr;
+ gap:12px;
+}
+.panel{
+ background:white;
+ border:1px solid #d7dde5;
+ border-radius:10px;
+ overflow:hidden;
+}
+.panel-title{
+ padding:12px 14px;
+ border-bottom:1px solid #e5e7eb;
+ font-weight:800;
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+}
+.panel-body{padding:12px}
+
+.stats{
+ display:grid;
+ grid-template-columns:repeat(5,1fr);
+ gap:8px;
+ margin-bottom:12px;
+}
+.stat{
+ background:white;
+ border:1px solid #d7dde5;
+ border-radius:9px;
+ padding:12px;
+}
+.stat small{display:block;color:#64748b;margin-bottom:6px}
+.stat strong{font-size:20px}
+
+.green{color:#15803d!important}
+.red{color:#dc2626!important}
+.blue{color:#2563eb!important}
+
+.chart-wrap{
+ height:440px;
+ position:relative;
+ background:#0b1220;
+ overflow:hidden;
+}
+canvas{width:100%;height:100%;display:block}
+
+.market-table{
+ width:100%;
+ border-collapse:collapse;
+}
+.market-table th,
+.market-table td{
+ padding:10px;
+ border-bottom:1px solid #e5e7eb;
+ text-align:left;
+ font-size:13px;
+}
+.market-table th{
+ background:#f8fafc;
+ font-weight:800;
+}
+.market-table tr:hover{background:#f8fafc}
+
+.form-grid{
+ display:grid;
+ grid-template-columns:repeat(2,1fr);
+ gap:8px;
+}
+.form-grid label{
+ font-size:12px;
+ font-weight:700;
+ color:#475569;
+ display:block;
+}
+.form-grid input,
+.form-grid select{
+ width:100%;
+ margin-top:4px;
+}
+
+.order-buttons{
+ display:grid;
+ grid-template-columns:1fr 1fr;
+ gap:8px;
+ margin-top:10px;
+}
+.order-buttons button{padding:12px}
+
+.position{
+ border:1px solid #d7dde5;
+ border-radius:8px;
+ padding:10px;
+ margin-bottom:8px;
+}
+.position-head{
+ display:flex;
+ justify-content:space-between;
+ font-weight:800;
+}
+.position-grid{
+ display:grid;
+ grid-template-columns:repeat(3,1fr);
+ gap:6px;
+ margin-top:8px;
+ font-size:12px;
+}
+.position-grid div{
+ background:#f8fafc;
+ padding:7px;
+ border-radius:5px;
+}
+.close-btn{
+ margin-top:8px;
+ width:100%;
+}
+
+.table-scroll{overflow:auto}
+
+.badge{
+ display:inline-block;
+ padding:4px 7px;
+ border-radius:5px;
+ font-size:11px;
+ font-weight:800;
+}
+.badge.buy{background:#dcfce7;color:#166534}
+.badge.sell{background:#fee2e2;color:#991b1b}
+
+.scale{
+ height:18px;
+ background:#e2e8f0;
+ border-radius:20px;
+ overflow:hidden;
+ position:relative;
+ margin:7px 0;
+}
+.scale-profit{
+ height:100%;
+ background:#16a34a;
+ width:0%;
+}
+.scale-loss{
+ height:100%;
+ background:#dc2626;
+ width:0%;
+}
+.scale-label{
+ display:flex;
+ justify-content:space-between;
+ font-size:11px;
+ color:#64748b;
+}
+
+.message{
+ padding:9px;
+ background:#f8fafc;
+ border:1px solid #e2e8f0;
+ border-radius:6px;
+ font-size:12px;
+ margin-top:8px;
+}
+
+@media(max-width:1000px){
+ .grid{grid-template-columns:1fr}
+ .stats{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:600px){
+ .stats{grid-template-columns:1fr 1fr}
+ .form-grid{grid-template-columns:1fr}
+ .chart-wrap{height:330px}
+ header{position:relative}
+}
+</style>
+</head>
+
+<body>
+
+<header>
+ <div class="logo">LOCAL BUSINESS OS · MARKET TERMINAL</div>
+ <div class="status">● SIMULATION MARKET ONLINE</div>
+</header>
+
+<div class="container">
+
+<!-- TOP CONTROLS -->
+<div class="toolbar">
+ <button class="primary" onclick="resetMarket()">Reset Market</button>
+ <button onclick="toggleMarket()">Pause / Resume</button>
+ <button onclick="changeSpeed()">Speed: <span id="speedText">1x</span></button>
+ <button onclick="openFullscreen()">⛶ Fullscreen Chart</button>
+ <button onclick="generateCandle()">Next Candle</button>
+ <button onclick="saveData()">Save</button>
+ <button onclick="loadData()">Load</button>
+</div>
+
+<!-- ACCOUNT STATS -->
+<div class="stats">
+ <div class="stat">
+  <small>Original Capital</small>
+  <strong id="originalCapital">₹10,000</strong>
+ </div>
+ <div class="stat">
+  <small>Available Balance</small>
+  <strong id="balance">₹10,000</strong>
+ </div>
+ <div class="stat">
+  <small>Invested</small>
+  <strong id="invested">₹0</strong>
+ </div>
+ <div class="stat">
+  <small>Unrealized P/L</small>
+  <strong id="unrealized">₹0</strong>
+ </div>
+ <div class="stat">
+  <small>Total Equity</small>
+  <strong id="equity">₹10,000</strong>
+ </div>
+</div>
+
+<div class="grid">
+
+<!-- LEFT -->
+<div>
+
+ <div class="panel">
+  <div class="panel-title">
+   <span>MARKET · BTC/LOCAL</span>
+   <span>
+    Price:
+    <strong id="price">₹1,000.00</strong>
+   </span>
+  </div>
+
+  <div class="chart-wrap" id="chartBox">
+   <canvas id="chart"></canvas>
+  </div>
+
+  <div class="panel-body">
+   <div class="scale-label">
+    <span>Market Loss</span>
+    <span id="chartPL">P/L: ₹0</span>
+    <span>Market Profit</span>
+   </div>
+   <div class="scale">
+    <div id="chartScale" class="scale-profit"></div>
+   </div>
+  </div>
+ </div>
+
+ <br>
+
+ <!-- MARKET DATA TABLE -->
+ <div class="panel">
+  <div class="panel-title">MARKET DATA</div>
+  <div class="table-scroll">
+   <table class="market-table">
+    <thead>
+     <tr>
+      <th>Instrument</th>
+      <th>Price</th>
+      <th>Change</th>
+      <th>High</th>
+      <th>Low</th>
+      <th>Trend</th>
+     </tr>
+    </thead>
+    <tbody>
+     <tr>
+      <td>BTC/LOCAL</td>
+      <td id="tablePrice">₹1,000.00</td>
+      <td id="change">0.00%</td>
+      <td id="high">₹1,000.00</td>
+      <td id="low">₹1,000.00</td>
+      <td id="trend">NEUTRAL</td>
+     </tr>
+    </tbody>
+   </table>
+  </div>
+ </div>
+
+ <br>
+
+ <!-- POSITIONS -->
+ <div class="panel">
+  <div class="panel-title">
+   <span>OPEN POSITIONS</span>
+   <span id="positionCount">0</span>
+  </div>
+  <div class="panel-body" id="positions">
+   <div class="message">No open positions.</div>
+  </div>
+ </div>
+
+ <br>
+
+ <!-- TRADE HISTORY -->
+ <div class="panel">
+  <div class="panel-title">TRADE HISTORY</div>
+  <div class="table-scroll">
+   <table class="market-table">
+    <thead>
+     <tr>
+      <th>Side</th>
+      <th>Entry</th>
+      <th>Exit</th>
+      <th>Amount</th>
+      <th>P/L</th>
+      <th>Reason</th>
+     </tr>
+    </thead>
+    <tbody id="history"></tbody>
+   </table>
+  </div>
+ </div>
+
+</div>
+
+<!-- RIGHT -->
+<div>
+
+ <!-- ORDER PANEL -->
+ <div class="panel">
+  <div class="panel-title">ORDER TERMINAL</div>
+  <div class="panel-body">
+
+   <div class="form-grid">
+
+    <div>
+     <label>Order Type</label>
+     <select id="orderType">
+      <option value="market">Market</option>
+      <option value="limit">Limit</option>
+     </select>
+    </div>
+
+    <div>
+     <label>Direction</label>
+     <select id="direction">
+      <option value="long">LONG / BUY</option>
+      <option value="short">SHORT / SELL</option>
+     </select>
+    </div>
+
+    <div>
+     <label>Investment Amount</label>
+     <input id="amount" type="number" value="1000" min="1">
+    </div>
+
+    <div>
+     <label>Leverage</label>
+     <select id="leverage">
+      <option value="1">1x</option>
+      <option value="2">2x</option>
+      <option value="5">5x</option>
+      <option value="10">10x</option>
+     </select>
+    </div>
+
+    <div>
+     <label>Limit Price</label>
+     <input id="limitPrice" type="number" value="1000">
+    </div>
+
+    <div>
+     <label>Quantity</label>
+     <input id="quantity" type="number" value="1" min="0.001" step="0.001">
+    </div>
+
+    <div>
+     <label>Stop Loss (SL)</label>
+     <input id="sl" type="number" placeholder="Optional">
+    </div>
+
+    <div>
+     <label>Take Profit (TP)</label>
+     <input id="tp" type="number" placeholder="Optional">
+    </div>
+
+   </div>
+
+   <div class="order-buttons">
+    <button class="success" onclick="placeTrade('long')">
+     BUY / LONG
+    </button>
+
+    <button class="danger" onclick="placeTrade('short')">
+     SELL / SHORT
+    </button>
+   </div>
+
+   <div class="message">
+    You can profit from both rising and falling simulated markets.
+    <br>
+    LONG profits when price rises.
+    SHORT profits when price falls.
+   </div>
+
+  </div>
+ </div>
+
+ <br>
+
+ <!-- INVESTMENT SCALE -->
+ <div class="panel">
+  <div class="panel-title">INVESTMENT SCALE</div>
+  <div class="panel-body">
+
+   <div class="scale-label">
+    <span>Invested</span>
+    <strong id="scaleInvested">₹0</strong>
+   </div>
+
+   <div class="scale">
+    <div id="investScale" class="scale-profit"></div>
+   </div>
+
+   <div class="scale-label">
+    <span>Loss</span>
+    <strong id="lossScale">₹0</strong>
+   </div>
+
+   <div class="scale">
+    <div id="lossBar" class="scale-loss"></div>
+   </div>
+
+   <div class="scale-label">
+    <span>Profit</span>
+    <strong id="profitScale">₹0</strong>
+   </div>
+
+   <div class="scale">
+    <div id="profitBar" class="scale-profit"></div>
+   </div>
+
+  </div>
+ </div>
+
+ <br>
+
+ <!-- MARKET CONTROL -->
+ <div class="panel">
+  <div class="panel-title">MARKET CONTROLS</div>
+  <div class="panel-body">
+
+   <div class="form-grid">
+    <div>
+     <label>Market Bias</label>
+     <select id="bias">
+      <option value="random">Random</option>
+      <option value="bull">Bullish</option>
+      <option value="bear">Bearish</option>
+     </select>
+    </div>
+
+    <div>
+     <label>Volatility</label>
+     <select id="volatility">
+      <option value="low">Low</option>
+      <option value="medium" selected>Medium</option>
+      <option value="high">High</option>
+     </select>
+    </div>
+   </div>
+
+   <br>
+
+   <button class="dark" onclick="forceMarketUp()">Force Market ↑</button>
+   <button class="danger" onclick="forceMarketDown()">Force Market ↓</button>
+
+  </div>
+ </div>
+
+ <br>
+
+ <!-- ACCOUNT DETAILS -->
+ <div class="panel">
+  <div class="panel-title">ACCOUNT DETAILS</div>
+  <div class="panel-body">
+
+   <table class="market-table">
+    <tr>
+     <td>Original Amount</td>
+     <td><strong id="accountOriginal">₹10,000</strong></td>
+    </tr>
+    <tr>
+     <td>Money Used</td>
+     <td><strong id="accountUsed">₹0</strong></td>
+    </tr>
+    <tr>
+     <td>Money Available</td>
+     <td><strong id="accountAvailable">₹10,000</strong></td>
+    </tr>
+    <tr>
+     <td>Open Position Value</td>
+     <td><strong id="accountPosition">₹0</strong></td>
+    </tr>
+    <tr>
+     <td>Realized P/L</td>
+     <td id="realized">₹0</td>
+    </tr>
+    <tr>
+     <td>Net P/L</td>
+     <td id="netPL">₹0</td>
+    </tr>
+   </table>
+
+  </div>
+ </div>
+
+</div>
+</div>
+</div>
+
+<script>
+/* ============================================================
+   LOCAL BUSINESS OS — SIMULATED MARKET TERMINAL
+   Single-file HTML / CSS / JS / localStorage
+   ============================================================ */
+
+const canvas=document.getElementById("chart");
+const ctx=canvas.getContext("2d");
+
+let marketRunning=true;
+let speed=1;
+let timer=null;
+
+let market={
+ price:1000,
+ previous:1000,
+ high:1000,
+ low:1000,
+ open:1000,
+ candles:[],
+ bias:"random",
+ volatility:"medium"
+};
+
+let account={
+ original:10000,
+ balance:10000,
+ realized:0
+};
+
+let positions=[];
+let history=[];
+
+function money(n){
+ return "₹"+Number(n||0).toLocaleString("en-IN",{
+  minimumFractionDigits:2,
+  maximumFractionDigits:2
+ });
+}
+
+function randomBetween(a,b){
+ return Math.random()*(b-a)+a;
+}
+
+function createInitialCandles(){
+ market.candles=[];
+
+ let p=1000;
+
+ for(let i=0;i<70;i++){
+
+  let open=p;
+
+  let move=randomBetween(-18,18);
+
+  let close=Math.max(50,open+move);
+
+  let high=Math.max(open,close)+randomBetween(2,12);
+  let low=Math.min(open,close)-randomBetween(2,12);
+
+  market.candles.push({
+   open,
+   close,
+   high,
+   low
+  });
+
+  p=close;
+ }
+
+ market.price=p;
+ market.previous=p;
+ market.high=p;
+ market.low=p;
+}
+
+function generateCandle(direction=null){
+
+ let old=market.price;
+
+ let volatility={
+  low:8,
+  medium:18,
+  high:35
+ }[market.volatility];
+
+ let bias=market.bias;
+
+ let drift=0;
+
+ if(direction==="up") drift=volatility*.8;
+ else if(direction==="down") drift=-volatility*.8;
+ else if(bias==="bull") drift=volatility*.25;
+ else if(bias==="bear") drift=-volatility*.25;
+
+ let move=drift+randomBetween(-volatility,volatility);
+
+ let open=old;
+ let close=Math.max(50,old+move);
+
+ let high=Math.max(open,close)+randomBetween(2,volatility*.7);
+ let low=Math.max(1,Math.min(open,close)-randomBetween(2,volatility*.7));
+
+ market.candles.push({
+  open,
+  close,
+  high,
+  low
+ });
+
+ if(market.candles.length>100)
+  market.candles.shift();
+
+ market.previous=old;
+ market.price=close;
+ market.high=Math.max(market.high,high);
+ market.low=Math.min(market.low,low);
+
+ checkStops();
+ updateUI();
+ drawChart();
+}
+
+function checkStops(){
+
+ positions.slice().forEach(pos=>{
+
+  if(pos.side==="long"){
+
+   if(pos.sl && market.price<=pos.sl){
+    closePosition(pos.id,"STOP LOSS");
+    return;
+   }
+
+   if(pos.tp && market.price>=pos.tp){
+    closePosition(pos.id,"TAKE PROFIT");
+    return;
+   }
+
+  }else{
+
+   if(pos.sl && market.price>=pos.sl){
+    closePosition(pos.id,"STOP LOSS");
+    return;
+   }
+
+   if(pos.tp && market.price<=pos.tp){
+    closePosition(pos.id,"TAKE PROFIT");
+    return;
+   }
+
+  }
+ });
+}
+
+function placeTrade(side){
+
+ let amount=Number(document.getElementById("amount").value)||0;
+ let leverage=Number(document.getElementById("leverage").value)||1;
+
+ if(amount<=0){
+  alert("Enter a valid investment amount.");
+  return;
+ }
+
+ if(amount>account.balance){
+  alert("Insufficient available balance.");
+  return;
+ }
+
+ let type=document.getElementById("orderType").value;
+
+ let entry=market.price;
+
+ if(type==="limit"){
+  entry=Number(document.getElementById("limitPrice").value);
+
+  if(!entry || entry<=0){
+   alert("Enter a valid limit price.");
+   return;
+  }
+
+  if(
+   (side==="long" && entry>market.price) ||
+   (side==="short" && entry<market.price)
+  ){
+   alert("This limit order is not executable at the current market price.");
+   return;
+  }
+ }
+
+ let sl=Number(document.getElementById("sl").value)||null;
+ let tp=Number(document.getElementById("tp").value)||null;
+
+ if(side==="long"){
+
+  if(sl && sl>=entry){
+   alert("For LONG, SL should be below entry price.");
+   return;
+  }
+
+  if(tp && tp<=entry){
+   alert("For LONG, TP should be above entry price.");
+   return;
+  }
+
+ }else{
+
+  if(sl && sl<=entry){
+   alert("For SHORT, SL should be above entry price.");
+   return;
+  }
+
+  if(tp && tp>=entry){
+   alert("For SHORT, TP should be below entry price.");
+   return;
+  }
+ }
+
+ let quantity=amount*leverage/entry;
+
+ account.balance-=amount;
+
+ positions.push({
+  id:Date.now()+Math.random(),
+  side,
+  entry,
+  amount,
+  quantity,
+  leverage,
+  sl,
+  tp,
+  time:new Date().toLocaleTimeString()
+ });
+
+ updateUI();
+}
+
+function positionPL(pos){
+
+ let price=market.price;
+
+ if(pos.side==="long"){
+  return (price-pos.entry)*pos.quantity;
+ }else{
+  return (pos.entry-price)*pos.quantity;
+ }
+}
+
+function totalInvested(){
+ return positions.reduce((sum,p)=>sum+p.amount,0);
+}
+
+function unrealizedPL(){
+ return positions.reduce((sum,p)=>sum+positionPL(p),0);
+}
+
+function closePosition(id,reason="MANUAL"){
+
+ let index=positions.findIndex(p=>p.id===id);
+
+ if(index===-1)return;
+
+ let pos=positions[index];
+
+ let pl=positionPL(pos);
+
+ account.balance+=pos.amount+pl;
+ account.realized+=pl;
+
+ history.unshift({
+  side:pos.side,
+  entry:pos.entry,
+  exit:market.price,
+  amount:pos.amount,
+  pl,
+  reason
+ });
+
+ positions.splice(index,1);
+
+ updateUI();
+}
+
+function closeAll(){
+ positions.slice().forEach(p=>closePosition(p.id,"MANUAL"));
+}
+
+function updateUI(){
+
+ let unreal=unrealizedPL();
+ let invested=totalInvested();
+ let equity=account.balance+invested+unreal;
+
+ document.getElementById("originalCapital").textContent=money(account.original);
+ document.getElementById("balance").textContent=money(account.balance);
+ document.getElementById("invested").textContent=money(invested);
+ document.getElementById("unrealized").textContent=money(unreal);
+ document.getElementById("equity").textContent=money(equity);
+
+ document.getElementById("price").textContent=money(market.price);
+ document.getElementById("tablePrice").textContent=money(market.price);
+ document.getElementById("high").textContent=money(market.high);
+ document.getElementById("low").textContent=money(market.low);
+
+ let change=((market.price-market.previous)/market.previous)*100;
+
+ let changeEl=document.getElementById("change");
+ changeEl.textContent=(change>=0?"+":"")+change.toFixed(2)+"%";
+ changeEl.className=change>=0?"green":"red";
+
+ let trend=document.getElementById("trend");
+
+ if(change>0.3){
+  trend.textContent="BULLISH";
+  trend.className="green";
+ }else if(change<-0.3){
+  trend.textContent="BEARISH";
+  trend.className="red";
+ }else{
+  trend.textContent="NEUTRAL";
+  trend.className="";
+ }
+
+ document.getElementById("scaleInvested").textContent=money(invested);
+ document.getElementById("lossScale").textContent=money(Math.max(0,-unreal));
+ document.getElementById("profitScale").textContent=money(Math.max(0,unreal));
+
+ let max=account.original||10000;
+
+ document.getElementById("investScale").style.width=
+  Math.min(100,(invested/max)*100)+"%";
+
+ document.getElementById("lossBar").style.width=
+  Math.min(100,(Math.max(0,-unreal)/max)*100)+"%";
+
+ document.getElementById("profitBar").style.width=
+  Math.min(100,(Math.max(0,unreal)/max)*100)+"%";
+
+ document.getElementById("chartPL").textContent=
+  "P/L: "+money(unreal);
+
+ let net=account.realized+unreal;
+
+ document.getElementById("realized").textContent=money(account.realized);
+ document.getElementById("netPL").textContent=money(net);
+
+ document.getElementById("accountOriginal").textContent=money(account.original);
+ document.getElementById("accountUsed").textContent=money(invested);
+ document.getElementById("accountAvailable").textContent=money(account.balance);
+ document.getElementById("accountPosition").textContent=money(invested);
+
+ document.getElementById("positionCount").textContent=positions.length;
+
+ renderPositions();
+ renderHistory();
+
+ document.getElementById("quantity").value=
+  Number(
+   (Number(document.getElementById("amount").value||0)*
+    Number(document.getElementById("leverage").value||1))/
+   market.price
+  ).toFixed(4);
+}
+
+function renderPositions(){
+
+ let box=document.getElementById("positions");
+
+ if(!positions.length){
+  box.innerHTML='<div class="message">No open positions.</div>';
+  return;
+ }
+
+ box.innerHTML="";
+
+ positions.forEach(pos=>{
+
+  let pl=positionPL(pos);
+
+  let div=document.createElement("div");
+  div.className="position";
+
+  div.innerHTML=`
+   <div class="position-head">
+    <span>
+     <span class="badge ${pos.side==="long"?"buy":"sell"}">
+      ${pos.side.toUpperCase()}
+     </span>
+     ${money(pos.entry)}
+    </span>
+    <span class="${pl>=0?"green":"red"}">${money(pl)}</span>
+   </div>
+
+   <div class="position-grid">
+
+    <div>
+     <small>Investment</small><br>
+     <strong>${money(pos.amount)}</strong>
+    </div>
+
+    <div>
+     <small>Quantity</small><br>
+     <strong>${pos.quantity.toFixed(4)}</strong>
+    </div>
+
+    <div>
+     <small>Leverage</small><br>
+     <strong>${pos.leverage}x</strong>
+    </div>
+
+    <div>
+     <small>Current</small><br>
+     <strong>${money(market.price)}</strong>
+    </div>
+
+    <div>
+     <small>SL</small><br>
+     <strong>${pos.sl?money(pos.sl):"—"}</strong>
+    </div>
+
+    <div>
+     <small>TP</small><br>
+     <strong>${pos.tp?money(pos.tp):"—"}</strong>
+    </div>
+
+   </div>
+
+   <button class="close-btn danger"
+    onclick="closePosition(${pos.id},'MANUAL')">
+    CLOSE POSITION · ${money(pos.amount+pl)}
+   </button>
+  `;
+
+  box.appendChild(div);
+ });
+}
+
+function renderHistory(){
+
+ let body=document.getElementById("history");
+
+ if(!history.length){
+  body.innerHTML=
+   `<tr><td colspan="6">No completed trades.</td></tr>`;
+  return;
+ }
+
+ body.innerHTML=history.map(h=>`
+  <tr>
+   <td>
+    <span class="badge ${h.side==="long"?"buy":"sell"}">
+     ${h.side.toUpperCase()}
+    </span>
+   </td>
+   <td>${money(h.entry)}</td>
+   <td>${money(h.exit)}</td>
+   <td>${money(h.amount)}</td>
+   <td class="${h.pl>=0?"green":"red"}">${money(h.pl)}</td>
+   <td>${h.reason}</td>
+  </tr>
+ `).join("");
+}
+
+function drawChart(){
+
+ let rect=canvas.getBoundingClientRect();
+
+ canvas.width=rect.width*devicePixelRatio;
+ canvas.height=rect.height*devicePixelRatio;
+
+ ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
+
+ let w=rect.width;
+ let h=rect.height;
+
+ ctx.clearRect(0,0,w,h);
+
+ ctx.fillStyle="#0b1220";
+ ctx.fillRect(0,0,w,h);
+
+ let candles=market.candles;
+
+ if(!candles.length)return;
+
+ let high=Math.max(...candles.map(c=>c.high));
+ let low=Math.min(...candles.map(c=>c.low));
+
+ let range=high-low||1;
+
+ function y(v){
+  return h-((v-low)/range)*(h-40)-20;
+ }
+
+ let step=w/candles.length;
+ let candleWidth=Math.max(2,step*.55);
+
+ // grid
+ ctx.strokeStyle="rgba(255,255,255,.08)";
+ ctx.lineWidth=1;
+
+ for(let i=0;i<6;i++){
+  let yy=20+i*((h-40)/5);
+
+  ctx.beginPath();
+  ctx.moveTo(0,yy);
+  ctx.lineTo(w,yy);
+  ctx.stroke();
+ }
+
+ candles.forEach((c,i)=>{
+
+  let x=i*step+step/2;
+
+  let yo=y(c.open);
+  let yc=y(c.close);
+  let yh=y(c.high);
+  let yl=y(c.low);
+
+  let up=c.close>=c.open;
+
+  ctx.strokeStyle=up?"#22c55e":"#ef4444";
+  ctx.fillStyle=up?"#22c55e":"#ef4444";
+
+  ctx.beginPath();
+  ctx.moveTo(x,yh);
+  ctx.lineTo(x,yl);
+  ctx.stroke();
+
+  let top=Math.min(yo,yc);
+  let bottom=Math.max(yo,yc);
+
+  ctx.fillRect(
+   x-candleWidth/2,
+   top,
+   candleWidth,
+   Math.max(2,bottom-top)
+  );
+ });
+
+ // current price
+ let py=y(market.price);
+
+ ctx.strokeStyle="#facc15";
+ ctx.setLineDash([5,5]);
+
+ ctx.beginPath();
+ ctx.moveTo(0,py);
+ ctx.lineTo(w,py);
+ ctx.stroke();
+
+ ctx.setLineDash([]);
+
+ ctx.fillStyle="#facc15";
+ ctx.font="12px Arial";
+ ctx.fillText(money(market.price),10,py-6);
+
+ // positions
+ positions.forEach(pos=>{
+
+  let ey=y(pos.entry);
+
+  ctx.strokeStyle=pos.side==="long"?"#60a5fa":"#fb7185";
+
+  ctx.beginPath();
+  ctx.moveTo(0,ey);
+  ctx.lineTo(w,ey);
+  ctx.stroke();
+
+  if(pos.sl){
+   let sy=y(pos.sl);
+
+   ctx.strokeStyle="#ef4444";
+   ctx.setLineDash([3,3]);
+
+   ctx.beginPath();
+   ctx.moveTo(0,sy);
+   ctx.lineTo(w,sy);
+   ctx.stroke();
+
+   ctx.setLineDash([]);
+  }
+
+  if(pos.tp){
+   let ty=y(pos.tp);
+
+   ctx.strokeStyle="#22c55e";
+   ctx.setLineDash([3,3]);
+
+   ctx.beginPath();
+   ctx.moveTo(0,ty);
+   ctx.lineTo(w,ty);
+   ctx.stroke();
+
+   ctx.setLineDash([]);
+  }
+ });
+}
+
+function toggleMarket(){
+
+ marketRunning=!marketRunning;
+
+ if(marketRunning)startMarket();
+ else clearInterval(timer);
+}
+
+function startMarket(){
+
+ clearInterval(timer);
+
+ timer=setInterval(()=>{
+  if(marketRunning)generateCandle();
+ },1000/speed);
+}
+
+function changeSpeed(){
+
+ if(speed===1)speed=2;
+ else if(speed===2)speed=4;
+ else speed=1;
+
+ document.getElementById("speedText").textContent=speed+"x";
+
+ startMarket();
+}
+
+function forceMarketUp(){
+ generateCandle("up");
+}
+
+function forceMarketDown(){
+ generateCandle("down");
+}
+
+function resetMarket(){
+
+ if(!confirm("Reset the complete simulated account and market?"))
+  return;
+
+ account={
+  original:10000,
+  balance:10000,
+  realized:0
+ };
+
+ positions=[];
+ history=[];
+
+ market={
+  price:1000,
+  previous:1000,
+  high:1000,
+  low:1000,
+  open:1000,
+  candles:[],
+  bias:document.getElementById("bias").value,
+  volatility:document.getElementById("volatility").value
+ };
+
+ createInitialCandles();
+ updateUI();
+ drawChart();
+}
+
+function saveData(){
+
+ let data={
+  market,
+  account,
+  positions,
+  history
+ };
+
+ localStorage.setItem(
+  "localBusinessOSMarket",
+  JSON.stringify(data)
+ );
+
+ alert("Saved.");
+}
+
+function loadData(){
+
+ let raw=localStorage.getItem("localBusinessOSMarket");
+
+ if(!raw){
+  alert("No saved data found.");
+  return;
+ }
+
+ try{
+
+  let data=JSON.parse(raw);
+
+  market=data.market;
+  account=data.account;
+  positions=data.positions||[];
+  history=data.history||[];
+
+  updateUI();
+  drawChart();
+
+ }catch(e){
+  alert("Saved data is invalid.");
+ }
+}
+
+function openFullscreen(){
+
+ let box=document.getElementById("chartBox");
+
+ if(box.requestFullscreen)
+  box.requestFullscreen();
+}
+
+document.getElementById("bias").addEventListener("change",e=>{
+ market.bias=e.target.value;
+});
+
+document.getElementById("volatility").addEventListener("change",e=>{
+ market.volatility=e.target.value;
+});
+
+document.getElementById("amount").addEventListener("input",updateUI);
+document.getElementById("leverage").addEventListener("change",updateUI);
+
+window.addEventListener("resize",drawChart);
+
+createInitialCandles();
+updateUI();
+drawChart();
+startMarket();
+
+</script>
+
+</body>
+</html>
